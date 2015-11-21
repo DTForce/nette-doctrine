@@ -8,6 +8,9 @@
 			"role": "Developer"
 		}
 	],
+	"license": [
+	       "LGPL-2.1"
+	],
 	"support":{
 		"issues": "https://github.com/DTForce/nette-doctrine/issues"
 	},
