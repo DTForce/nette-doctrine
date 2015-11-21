@@ -19,7 +19,7 @@
 		"doctrine/orm": ">=2.5.1"
 	},
 	"conflict": {
-		"kdyby/doctrine": "*"
+		"_kdyby/doctrine": "*"
 	},
 	"autoload": {
 		"psr-4" : {

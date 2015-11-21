@@ -87,7 +87,7 @@ class DoctrineExtension extends CompilerExtension
 			->addSetup('setNamingStrategy', ['@' . $name . '.naming']);
 
 		if($this->hasEventManager($builder)) {
-			$builder->getDefinition($builder->getByType('@Doctrine\Common\EventManager'))
+			$builder->getDefinition($builder->getByType('Doctrine\Common\EventManager'))
 				->addSetup('addEventListener', [Events::loadClassMetadata, '@' . $name . '.resolver']);
 		} else {
 			$builder->addDefinition($name . ".eventManager")
