@@ -1,0 +1,8 @@
+{
+    "name": "dtforce/nette-doctrine",
+    "autoload": {
+        "psr-4" : {
+            "DTForce\\DoctrineExtension\\" : "src"
+        }
+    }
+}
