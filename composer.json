@@ -1,8 +1,26 @@
 {
-    "name": "dtforce/nette-doctrine",
-    "autoload": {
-        "psr-4" : {
-            "DTForce\\DoctrineExtension\\" : "src"
-        }
-    }
+	"name": "dtforce/nette-doctrine",
+	"authors": [
+		{
+			"name": "DTForce - Jan Mareš",
+			"email": "jan.mares@dtforce.com",
+			"homepage": "http://www.dtforce.com",
+			"role": "Developer"
+		}
+	],
+	"support":{
+		"issues": "https://github.com/DTForce/nette-doctrine/issues"
+	},
+	"require": {
+		"php": ">=5.4",
+		"doctrine/orm": ">=2.5.1"
+	},
+	"conflict": {
+		"kdyby/doctrine": "*"
+	},
+	"autoload": {
+		"psr-4" : {
+			"DTForce\\DoctrineExtension\\" : "src"
+		}
+	}
 }
