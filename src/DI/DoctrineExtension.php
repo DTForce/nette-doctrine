@@ -44,10 +44,21 @@ class DoctrineExtension extends CompilerExtension
 
 	const DOCTRINE_SQL_PANEL_FQN = 'DTForce\DoctrineExtension\Debug\DoctrineSQLPanel';
 
+	/**
+	 * @var array
+	 */
+	public static $defaults = [
+		'debug' => TRUE,
+		'prefix' => 'doctrine.default',
+		'proxyDir' => '%tempDir%/cache/proxies',
+		'ownEventManager' => FALSE,
+		'targetEntityMappings' => [],
+		'metadata' => []
+	];
 
 	public function loadConfiguration()
 	{
-		$config = $this->getConfig();
+		$config = $this->getConfig(self::$defaults);
 
 		$targetEntitiesMappings = [];
 		$metadatas = [];
