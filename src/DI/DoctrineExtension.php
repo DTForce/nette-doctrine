@@ -45,6 +45,7 @@ class DoctrineExtension extends CompilerExtension
 
 	const DOCTRINE_SQL_PANEL_FQN = 'DTForce\DoctrineExtension\Debug\DoctrineSQLPanel';
 	const DOCTRINE_DEFAULT_CACHE = 'Doctrine\Common\Cache\ArrayCache';
+	const KDYBY_CONSOLE_EXTENSION = 'Kdyby\Console\DI\ConsoleExtension';
 
 	/**
 	 * @var array
@@ -117,6 +118,7 @@ class DoctrineExtension extends CompilerExtension
 					->setClass(self::DOCTRINE_SQL_PANEL_FQN);
 		}
 
+		$this->addHelpersToKdybyConsole($builder);
 	}
 
 	public function beforeCompile()
@@ -177,6 +179,16 @@ class DoctrineExtension extends CompilerExtension
 		return interface_exists('Tracy\IBarPanel');
 	}
 
+
+	private function addHelpersToKdybyConsole(ContainerBuilder $builder)
+	{
+		if(class_exists(self::KDYBY_CONSOLE_EXTENSION)){
+			$helperTag = constant(self::KDYBY_CONSOLE_EXTENSION . '::HELPER_TAG');
+			$builder->addDefinition($this->prefix('helper.entityManager'))
+					->setClass('Doctrine\ORM\Tools\Console\Helper\EntityManagerHelper')
+					->addTag($helperTag, 'em');
+		}
+	}
 
 	/**
 	 * Tests whether EventManager is defined.
