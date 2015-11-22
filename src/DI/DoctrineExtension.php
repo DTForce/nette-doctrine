@@ -9,10 +9,11 @@
 namespace DTForce\DoctrineExtension\DI;
 
 use Doctrine\ORM\Events;
-use Kdyby\Doctrine\DI\IEntityProvider;
-use Kdyby\Doctrine\DI\ITargetEntityProvider;
+use DTForce\DoctrineExtension\Contract\IClassMappingProvider;
+use DTForce\DoctrineExtension\Contract\IEntitySourceProvider;
 use Nette\DI\CompilerExtension;
 use Nette\DI\ContainerBuilder;
+use Nette\InvalidStateException;
 use Nette\PhpGenerator\ClassType;
 use Nette\Utils\Validators;
 
@@ -43,6 +44,7 @@ class DoctrineExtension extends CompilerExtension
 {
 
 	const DOCTRINE_SQL_PANEL_FQN = 'DTForce\DoctrineExtension\Debug\DoctrineSQLPanel';
+	const DOCTRINE_DEFAULT_CACHE = 'Doctrine\Common\Cache\ArrayCache';
 
 	/**
 	 * @var array
@@ -60,18 +62,18 @@ class DoctrineExtension extends CompilerExtension
 	{
 		$config = $this->getConfig(self::$defaults);
 
-		$targetEntitiesMappings = [];
-		$metadatas = [];
+		$targetEntitiesMappings = $config['targetEntityMappings'];
+		$metadatas = $config['metadata'];
 		$builder = $this->getContainerBuilder();
 		foreach ($this->compiler->getExtensions() as $extension) {
-			if ($extension instanceof IEntityProvider) {
-				$metadata = $extension->getEntityMappings();
+			if ($extension instanceof IEntitySourceProvider) {
+				$metadata = $extension->getEntityFolderMappings();
 				Validators::assert($metadata, 'array');
 				$metadatas = array_merge($metadatas, $metadata);
 			}
 
-			if ($extension instanceof ITargetEntityProvider) {
-				$targetEntities = $extension->getTargetEntityMappings();
+			if ($extension instanceof IClassMappingProvider) {
+				$targetEntities = $extension->getClassnameToClassnameMapping();
 				Validators::assert($targetEntities, 'array');
 				$targetEntitiesMappings = array_merge($targetEntitiesMappings, $targetEntities);
 			}
@@ -86,25 +88,19 @@ class DoctrineExtension extends CompilerExtension
 		$builder->addDefinition($name . ".naming")
 			->setClass('\Doctrine\ORM\Mapping\UnderscoreNamingStrategy');
 
+		$cache = $this->getCache($name, $builder);
+
 		$builder->addDefinition($name . ".config")
 			->setClass('\Doctrine\ORM\Configuration')
 			->setFactory('\Doctrine\ORM\Tools\Setup::createAnnotationMetadataConfiguration', [
 				array_values($metadatas),
 				$config['debug'],
 				$config['proxyDir'],
-				'@' . $name . '.cache',
+				$cache,
 				FALSE
 			])
 			->addSetup('setNamingStrategy', ['@' . $name . '.naming']);
 
-		if($this->hasEventManager($builder)) {
-			$builder->getDefinition($builder->getByType('Doctrine\Common\EventManager'))
-				->addSetup('addEventListener', [Events::loadClassMetadata, '@' . $name . '.resolver']);
-		} else {
-			$builder->addDefinition($name . ".eventManager")
-				->setClass('@Doctrine\Common\EventManager')
-				->addSetup('addEventListener', [Events::loadClassMetadata, '@' . $name . '.resolver']);
-		}
 
 		$builder->addDefinition($name . ".entityManager")
 			->setClass('\Doctrine\ORM\EntityManager')
@@ -130,6 +126,26 @@ class DoctrineExtension extends CompilerExtension
 				]);
 		}
 
+	}
+
+	public function beforeCompile()
+	{
+		$builder = $this->getContainerBuilder();
+
+		$config = $this->getConfig(self::$defaults);
+		$name = $config['prefix'];
+
+		if($this->hasEventManager($builder)) {
+			$builder->getDefinition($builder->getByType('Doctrine\Common\EventManager'))
+					->addSetup('addEventListener', [Events::loadClassMetadata, '@' . $name . '.resolver']);
+		} else {
+			if($config['ownEventManager']){
+				throw new InvalidStateException("Where is your own EventManager?");
+			}
+			$builder->addDefinition($name . ".eventManager")
+					->setClass('Doctrine\Common\EventManager')
+					->addSetup('addEventListener', [Events::loadClassMetadata, '@' . $name . '.resolver']);
+		}
 	}
 
 
@@ -162,4 +178,13 @@ class DoctrineExtension extends CompilerExtension
 		return strlen($builder->getByType('Doctrine\Common\EventManager')) > 0;
 	}
 
+	private function getCache($prefix, ContainerBuilder $builder){
+		if(strlen($builder->getByType('Doctrine\Common\Cache\Cache')) > 0){
+			return '@' . $builder->getByType('Doctrine\Common\Cache\Cache');
+		} else {
+			$builder->addDefinition($prefix . ".cache")
+				->setClass(self::DOCTRINE_DEFAULT_CACHE);
+			return '@' . $prefix . ".cache";
+		}
+	}
 }
