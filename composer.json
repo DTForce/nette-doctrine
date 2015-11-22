@@ -18,9 +18,6 @@
 		"php": ">=5.4",
 		"doctrine/orm": ">=2.5.1"
 	},
-	"conflict": {
-		"_kdyby/doctrine": "*"
-	},
 	"autoload": {
 		"psr-4" : {
 			"DTForce\\DoctrineExtension\\" : "src"
