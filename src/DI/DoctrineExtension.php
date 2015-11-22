@@ -58,72 +58,63 @@ class DoctrineExtension extends CompilerExtension
 		'metadata' => []
 	];
 
+	private $entitySources = [];
+
+	private $classMappings = [];
+
+
 	public function loadConfiguration()
 	{
 		$config = $this->getConfig(self::$defaults);
 
-		$targetEntitiesMappings = $config['targetEntityMappings'];
-		$metadatas = $config['metadata'];
-		$builder = $this->getContainerBuilder();
+		$this->classMappings = $config['targetEntityMappings'];
+		$this->entitySources = $config['metadata'];
 		foreach ($this->compiler->getExtensions() as $extension) {
 			if ($extension instanceof IEntitySourceProvider) {
-				$metadata = $extension->getEntityFolderMappings();
-				Validators::assert($metadata, 'array');
-				$metadatas = array_merge($metadatas, $metadata);
+				$entitySource = $extension->getEntityFolderMappings();
+				Validators::assert($entitySource, 'array');
+				$this->entitySources = array_merge($this->entitySources, $entitySource);
 			}
 
 			if ($extension instanceof IClassMappingProvider) {
-				$targetEntities = $extension->getClassnameToClassnameMapping();
-				Validators::assert($targetEntities, 'array');
-				$targetEntitiesMappings = array_merge($targetEntitiesMappings, $targetEntities);
+				$entityMapping = $extension->getClassnameToClassnameMapping();
+				Validators::assert($entityMapping, 'array');
+				$this->classMappings = array_merge($this->classMappings, $entityMapping);
 			}
 
 		}
 
+		$builder = $this->getContainerBuilder();
+
 		$name = $config['prefix'];
 
+
 		$builder->addDefinition($name . ".resolver")
-			->setClass('\Doctrine\ORM\Tools\ResolveTargetEntityListener');
+				->setClass('\Doctrine\ORM\Tools\ResolveTargetEntityListener');
 
 		$builder->addDefinition($name . ".naming")
-			->setClass('\Doctrine\ORM\Mapping\UnderscoreNamingStrategy');
-
-		$cache = $this->getCache($name, $builder);
+				->setClass('\Doctrine\ORM\Mapping\UnderscoreNamingStrategy');
 
 		$builder->addDefinition($name . ".config")
-			->setClass('\Doctrine\ORM\Configuration')
-			->setFactory('\Doctrine\ORM\Tools\Setup::createAnnotationMetadataConfiguration', [
-				array_values($metadatas),
-				$config['debug'],
-				$config['proxyDir'],
-				$cache,
-				FALSE
-			])
-			->addSetup('setNamingStrategy', ['@' . $name . '.naming']);
+				->setClass('\Doctrine\ORM\Configuration');
+
+
+		$builder->addDefinition($name . ".connection")
+				->setClass('\Doctrine\DBAL\Connection')
+				->setFactory('@' . $name . '.entityManager::getConnection');
 
 
 		$builder->addDefinition($name . ".entityManager")
-			->setClass('\Doctrine\ORM\EntityManager')
-			->setFactory('\Doctrine\ORM\EntityManager::create', [
-				$config['config'],
-				'@' . $name . '.config',
-				'@Doctrine\Common\EventManager'
-			]);
+				->setClass('\Doctrine\ORM\EntityManager')
+				->setFactory('\Doctrine\ORM\EntityManager::create', [
+						$config['config'],
+						'@' . $name . '.config',
+						'@Doctrine\Common\EventManager'
+				]);
 
 		if ($this->hasIBarPanelInterface()) {
 			$builder->addDefinition($this->prefix($name . '.diagnosticsPanel'))
-				->setClass(self::DOCTRINE_SQL_PANEL_FQN);
-		}
-
-		$builder->addDefinition($name . ".connection")
-			->setClass('\Doctrine\DBAL\Connection')
-			->setFactory('@' . $name . '.entityManager::getConnection');
-
-		foreach ($targetEntitiesMappings as $source => $target) {
-			$builder->getDefinition($name . '.resolver')
-				->addSetup('addResolveTargetEntity', [
-					$source, $target, []
-				]);
+					->setClass(self::DOCTRINE_SQL_PANEL_FQN);
 		}
 
 	}
@@ -134,6 +125,26 @@ class DoctrineExtension extends CompilerExtension
 
 		$config = $this->getConfig(self::$defaults);
 		$name = $config['prefix'];
+
+		$cache = $this->getCache($name, $builder);
+
+		$builder->getDefinition($name . ".config")
+				->setFactory('\Doctrine\ORM\Tools\Setup::createAnnotationMetadataConfiguration', [
+						array_values($this->entitySources),
+						$config['debug'],
+						$config['proxyDir'],
+						$cache,
+						FALSE
+				])
+				->addSetup('setNamingStrategy', ['@' . $name . '.naming']);
+
+
+		foreach ($this->classMappings as $source => $target) {
+			$builder->getDefinition($name . '.resolver')
+					->addSetup('addResolveTargetEntity', [
+							$source, $target, []
+					]);
+		}
 
 		if($this->hasEventManager($builder)) {
 			$builder->getDefinition($builder->getByType('Doctrine\Common\EventManager'))
