@@ -10,7 +10,7 @@ extensions:
 Configure Doctrine access and other parameters like this:
 ```yaml
 doctrine:
-	config:
+	connection:
 		driver: pdo_pgsql
 		host: localhost
 		port: 5432

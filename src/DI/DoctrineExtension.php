@@ -108,7 +108,7 @@ class DoctrineExtension extends CompilerExtension
 		$builder->addDefinition($name . ".entityManager")
 				->setClass('\Doctrine\ORM\EntityManager')
 				->setFactory('\Doctrine\ORM\EntityManager::create', [
-						$config['config'],
+						$config['connection'],
 						'@' . $name . '.config',
 						'@Doctrine\Common\EventManager'
 				]);
