@@ -1,5 +1,6 @@
 {
 	"name": "dtforce/nette-doctrine",
+	"description": "A lightweight Doctrine integration extension for Nette framework.",
 	"authors": [
 		{
 			"name": "DTForce - Jan Mareš",
