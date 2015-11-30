@@ -1,0 +1,13 @@
+before_commands:
+    - "composer install --prefer-source"
+
+tools:
+    external_code_coverage:
+        timeout: 900
+    sensiolabs_security_checker: true
+    php_code_coverage:
+        enabled: true
+
+checks:
+    php:
+        code_rating: true
