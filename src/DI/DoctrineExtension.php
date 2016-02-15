@@ -56,7 +56,8 @@ class DoctrineExtension extends CompilerExtension
 		'proxyDir' => '%tempDir%/cache/proxies',
 		'ownEventManager' => FALSE,
 		'targetEntityMappings' => [],
-		'metadata' => []
+		'metadata' => [],
+		'functions' => []
 	];
 
 	private $entitySources = [];
@@ -130,7 +131,7 @@ class DoctrineExtension extends CompilerExtension
 
 		$cache = $this->getCache($name, $builder);
 
-		$builder->getDefinition($name . ".config")
+		$configService = $builder->getDefinition($name . ".config")
 				->setFactory('\Doctrine\ORM\Tools\Setup::createAnnotationMetadataConfiguration', [
 						array_values($this->entitySources),
 						$config['debug'],
@@ -139,6 +140,17 @@ class DoctrineExtension extends CompilerExtension
 						FALSE
 				])
 				->addSetup('setNamingStrategy', ['@' . $name . '.naming']);
+
+
+		foreach ($config['functions'] as $functionName => $function) {
+			$configService->addSetup(
+				'addCustomStringFunction',
+				[
+					$functionName,
+					$function
+				]
+			);
+		}
 
 
 		foreach ($this->classMappings as $source => $target) {
