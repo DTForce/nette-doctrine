@@ -54,6 +54,7 @@ class DoctrineExtension extends CompilerExtension
 		'debug' => TRUE,
 		'prefix' => 'doctrine.default',
 		'proxyDir' => '%tempDir%/cache/proxies',
+		'sourceDir' => NULL,
 		'ownEventManager' => FALSE,
 		'targetEntityMappings' => [],
 		'metadata' => [],
@@ -84,6 +85,10 @@ class DoctrineExtension extends CompilerExtension
 				$this->classMappings = array_merge($this->classMappings, $entityMapping);
 			}
 
+		}
+
+		if ($config['sourceDir'] !== NULL) {
+			$this->entitySources[] = $config['sourceDir'];
 		}
 
 		$builder = $this->getContainerBuilder();
