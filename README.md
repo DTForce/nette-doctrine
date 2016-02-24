@@ -1,3 +1,4 @@
+[![Scrutinizer Code Quality](https://scrutinizer-ci.com/g/DTForce/nette-doctrine/badges/quality-score.png?b=master)](https://scrutinizer-ci.com/g/DTForce/nette-doctrine/?branch=master)
 # nette-doctrine
 A lightweight Doctrine integration extension for Nette framework. This extension is a replacement of Kdyby\Doctrine,
 suitable for those who want to use native Doctrine classes and don't want register entity manager in the Nette 
