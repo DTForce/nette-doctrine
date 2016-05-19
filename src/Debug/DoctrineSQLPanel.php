@@ -233,6 +233,11 @@ class DoctrineSQLPanel implements IBarPanel, SQLLogger
 	 */
 	public function bindToBar()
 	{
+		// No SQL capturing in CLI or when debugger is off or when in production mode
+		if (php_sapi_name() === 'cli' || ! Debugger::isEnabled() || Debugger::$productionMode) {
+			return;
+		}
+
 		$this->entityManager->getConfiguration()->setSQLLogger($this);
 		$this->connection = $this->entityManager->getConnection();
 		Debugger::getBar()->addPanel($this);
