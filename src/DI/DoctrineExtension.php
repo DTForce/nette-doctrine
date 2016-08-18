@@ -13,6 +13,7 @@ use DTForce\DoctrineExtension\Contract\IClassMappingProvider;
 use DTForce\DoctrineExtension\Contract\IEntitySourceProvider;
 use Nette\DI\CompilerExtension;
 use Nette\DI\ContainerBuilder;
+use Nette\DI\Statement;
 use Nette\InvalidStateException;
 use Nette\PhpGenerator\ClassType;
 use Nette\Utils\Validators;
@@ -52,6 +53,13 @@ class DoctrineExtension extends CompilerExtension
 	 */
 	public static $defaults = [
 		'debug' => TRUE,
+
+		'dbal' => [
+			'typeOverrides' => [],
+			'types' => [],
+			'schema_filter' => NULL
+		],
+
 		'prefix' => 'doctrine.default',
 		'proxyDir' => '%tempDir%/cache/proxies',
 		'sourceDir' => NULL,
@@ -103,7 +111,8 @@ class DoctrineExtension extends CompilerExtension
 				->setClass('\Doctrine\ORM\Mapping\UnderscoreNamingStrategy');
 
 		$builder->addDefinition($name . ".config")
-				->setClass('\Doctrine\ORM\Configuration');
+				->setClass('\Doctrine\ORM\Configuration')
+				->addSetup(new Statement('setFilterSchemaAssetsExpression', [$config['dbal']['schema_filter']]));
 
 
 		$builder->addDefinition($name . ".connection")
@@ -175,6 +184,49 @@ class DoctrineExtension extends CompilerExtension
 			$builder->addDefinition($name . ".eventManager")
 					->setClass('Doctrine\Common\EventManager')
 					->addSetup('addEventListener', [Events::loadClassMetadata, '@' . $name . '.resolver']);
+		}
+
+		$this->processDbalTypes($name, $config['dbal']['types']);
+		$this->processDbalTypeOverrides($name, $config['dbal']['typeOverrides']);
+	}
+
+
+	/**
+	 * @param string $name
+	 * @param array $types
+	 */
+	private function processDbalTypes($name, array $types)
+	{
+		$builder = $this->getContainerBuilder();
+		$connection = $builder->getDefinition($name . '.entityManager');
+
+		foreach ($types as $type => $typeSpec) {
+			if (is_array($typeSpec)) {
+				$className = $typeSpec['class'];
+				$nativeType = $typeSpec['nativeType'];
+			} else {
+				$className = $typeSpec;
+				$nativeType = $type;
+			}
+			$connection->addSetup('if ( ! Doctrine\DBAL\Types\Type::hasType(?)) {
+				Doctrine\DBAL\Types\Type::addType(?, ?);
+				$service->getConnection()->getDatabasePlatform()->registerDoctrineTypeMapping(?, ?);
+			}', [$type, $type, $className, $nativeType, $type]);
+		}
+	}
+
+
+	/**
+	 * @param string $name
+	 * @param array $types
+	 */
+	private function processDbalTypeOverrides($name, array $types)
+	{
+		$builder = $this->getContainerBuilder();
+		$connection = $builder->getDefinition($name . '.connection');
+
+		foreach ($types as $type => $className) {
+			$connection->addSetup('Doctrine\DBAL\Types\Type::overrideType(?, ?);', [$type, $className]);
 		}
 	}
 
