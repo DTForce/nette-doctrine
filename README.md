@@ -28,6 +28,18 @@ doctrine:
 	prefix: doctrine.default
 	proxyDir: %tempDir%/cache/proxies
 	sourceDir: %appDir%/Entity
+
+	dbal:
+		types:
+			dateinterval: App\Doctrine\Postgresql\Types\DateIntervalType
+		type_overrides:
+			date: VasekPurchart\Doctrine\Type\DateTimeImmutable\DateTimeImmutableType
+			datetime: VasekPurchart\Doctrine\Type\DateTimeImmutable\DateTimeImmutableType
+			datetimetz: VasekPurchart\Doctrine\Type\DateTimeImmutable\DateTimeTzImmutableType
+		schema_filter: "~^(?!nd_)~" # tables and sequences that start with nd_ are ingored by Doctrine
+
+	functions:
+		CAST: App\Doctrine\Postgresql\Functions\Cast
 ```	
 
 ## Tweaking

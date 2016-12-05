@@ -55,7 +55,7 @@ class DoctrineExtension extends CompilerExtension
 		'debug' => TRUE,
 
 		'dbal' => [
-			'typeOverrides' => [],
+			'type_overrides' => [],
 			'types' => [],
 			'schema_filter' => NULL
 		],
@@ -187,7 +187,7 @@ class DoctrineExtension extends CompilerExtension
 		}
 
 		$this->processDbalTypes($name, $config['dbal']['types']);
-		$this->processDbalTypeOverrides($name, $config['dbal']['typeOverrides']);
+		$this->processDbalTypeOverrides($name, $config['dbal']['type_overrides']);
 	}
 
 
@@ -200,17 +200,11 @@ class DoctrineExtension extends CompilerExtension
 		$builder = $this->getContainerBuilder();
 		$connection = $builder->getDefinition($name . '.entityManager');
 
-		foreach ($types as $type => $typeSpec) {
-			if (is_array($typeSpec)) {
-				$className = $typeSpec['class'];
-				$nativeType = $typeSpec['nativeType'];
-			} else {
-				$className = $typeSpec;
-				$nativeType = $type;
-			}
-			$connection->addSetup('if ( ! Doctrine\DBAL\Types\Type::hasType(?)) {
-				Doctrine\DBAL\Types\Type::addType(?, ?);
-			}', [$type, $type, $className, $nativeType, $type]);
+		foreach ($types as $type => $className) {
+			$connection->addSetup(
+				'if ( ! Doctrine\DBAL\Types\Type::hasType(?)) { Doctrine\DBAL\Types\Type::addType(?, ?); }',
+				[$type, $type, $className]
+			);
 		}
 	}
 
