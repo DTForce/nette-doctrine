@@ -210,7 +210,6 @@ class DoctrineExtension extends CompilerExtension
 			}
 			$connection->addSetup('if ( ! Doctrine\DBAL\Types\Type::hasType(?)) {
 				Doctrine\DBAL\Types\Type::addType(?, ?);
-				$service->getConnection()->getDatabasePlatform()->registerDoctrineTypeMapping(?, ?);
 			}', [$type, $type, $className, $nativeType, $type]);
 		}
 	}
