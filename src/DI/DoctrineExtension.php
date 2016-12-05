@@ -223,10 +223,10 @@ class DoctrineExtension extends CompilerExtension
 	private function processDbalTypeOverrides($name, array $types)
 	{
 		$builder = $this->getContainerBuilder();
-		$connection = $builder->getDefinition($name . '.connection');
+		$entityManagerDefinition = $builder->getDefinition($name . '.entityManager');
 
 		foreach ($types as $type => $className) {
-			$connection->addSetup('Doctrine\DBAL\Types\Type::overrideType(?, ?);', [$type, $className]);
+			$entityManagerDefinition->addSetup('Doctrine\DBAL\Types\Type::overrideType(?, ?);', [$type, $className]);
 		}
 	}
 
