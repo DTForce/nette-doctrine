@@ -7,14 +7,14 @@ service container themselves. It is compatible with Kdyby\Console.
 ## Configuration
 Add extension to Nette project like this:
 
-```yaml
+```neon
 extensions:
 	doctrine: DTForce\DoctrineExtension\DI\DoctrineExtension
 ```
 
 Configure Doctrine access and other parameters like this:
 
-```yaml
+```neon
 doctrine:
 	connection:
 		driver: pdo_pgsql
